@@ -1,13 +1,14 @@
 import json
 import os
 from dotenv import load_dotenv
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, Response, session, redirect, url_for
 import psycopg2
 from anthropic import Anthropic
 
 load_dotenv(override=True)
 
 app = Flask(__name__, static_folder='static')
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret')
 
 # API 키 확인 (디버깅용)
 api_key = os.environ.get('CLAUDE_API_KEY')
@@ -18,6 +19,50 @@ else:
 
 def get_db():
     return psycopg2.connect(os.environ['DATABASE_URL'])
+
+# Simple HTTP Basic Auth credentials (can be overridden with env vars)
+AUTH_USER = os.environ.get('AUTH_USER', 'admin')
+AUTH_PASS = os.environ.get('AUTH_PASS', 'password')
+
+# Max tokens default and optional limit (can be overridden with env vars)
+MAX_TOKENS_DEFAULT = int(os.environ.get('MAX_TOKENS_DEFAULT', '1024'))
+MAX_TOKENS_LIMIT = int(os.environ.get('MAX_TOKENS_LIMIT')) if os.environ.get('MAX_TOKENS_LIMIT') else None
+
+
+@app.before_request
+def require_login():
+    # Allow static assets and login routes without auth
+    if request.path.startswith('/static') or request.path in ('/favicon.ico', '/login'):
+        return
+    # Allow the login POST and GET
+    if request.path == '/login' and request.method in ('GET', 'POST'):
+        return
+    # Check session
+    if not session.get('user'):
+        # For API requests return 401 JSON, for browser redirect to login
+        if request.path.startswith('/api'):
+            return jsonify({'error': 'authentication required'}), 401
+        return redirect(url_for('login'))
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'GET':
+        return send_from_directory('static', 'login.html')
+    # POST: authenticate
+    username = request.form.get('username')
+    password = request.form.get('password')
+    if username == AUTH_USER and password == AUTH_PASS:
+        session['user'] = username
+        return redirect(url_for('index'))
+    # auth failed -> show login with error
+    return redirect(url_for('login') + '?error=1')
+
+
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return redirect(url_for('login'))
 
 @app.route('/')
 def index():
@@ -173,8 +218,17 @@ def call_claude():
     prompt_text = build_prompt_text(role, context, task, example)
 
     client = Anthropic(api_key=api_key)
-    # limit tokens to reduce memory and response size
-    max_tokens = int(data.get('max_tokens', 256))
+    # determine max tokens: request -> env default -> apply optional limit
+    try:
+        requested = data.get('max_tokens')
+        if requested is None:
+            max_tokens = MAX_TOKENS_DEFAULT
+        else:
+            max_tokens = int(requested)
+    except (TypeError, ValueError):
+        max_tokens = MAX_TOKENS_DEFAULT
+    if MAX_TOKENS_LIMIT:
+        max_tokens = min(max_tokens, MAX_TOKENS_LIMIT)
     try:
         message = client.messages.create(
             model=model,
