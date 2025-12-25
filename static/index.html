@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Prompt Builder</title>
+    <style>
+        :root {
+            --bg: #f4f6fb;
+            --panel: #eef2f7;
+            --card: #ffffff;
+            --text: #0f172a;
+            --muted: #6b7280;
+            --primary: #2563eb;
+            --primary-strong: #1d4ed8;
+            --danger: #ef4444;
+            --border: #d6deeb;
+            --shadow: 0 14px 38px rgba(15, 23, 42, 0.12);
+            --radius: 14px;
+            --font: "Space Grotesk", "Inter", system-ui, -apple-system, sans-serif;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: var(--font);
+            background: radial-gradient(circle at 20% 20%, rgba(37,99,235,0.10), transparent 32%),
+                        radial-gradient(circle at 82% 6%, rgba(239,68,68,0.08), transparent 28%),
+                        radial-gradient(circle at 50% 80%, rgba(16,185,129,0.08), transparent 36%),
+                        var(--bg);
+            color: var(--text);
+        }
+
+        .page {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 28px 20px 40px;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px;
+            letter-spacing: -0.02em;
+        }
+
+        .subtext {
+            color: var(--muted);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 18px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1.1fr 1.6fr 1.3fr;
+            gap: 16px;
+            align-items: start;
+        }
+
+        .column-title {
+            margin: 0 0 10px;
+            font-size: 16px;
+            color: var(--muted);
+        }
+
+        .prompt-form { display: grid; gap: 12px; }
+
+        label {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .field-wrap {
+            position: relative;
+        }
+
+        .grow-btn {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            padding: 6px 8px;
+            font-size: 11px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #131b2d;
+            color: var(--muted);
+            cursor: pointer;
+            transition: border-color 0.15s ease, color 0.15s ease;
+        }
+
+        .grow-btn:hover {
+            border-color: var(--primary);
+            color: var(--text);
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: #f9fbff;
+            color: var(--text);
+            font-size: 15px;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.14);
+            background: #ffffff;
+        }
+
+        textarea {
+            min-height: 140px;
+            resize: vertical;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            border: 1px solid transparent;
+            border-radius: 10px;
+            padding: 11px 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.08s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+        }
+
+        .btn:hover { transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+
+        .btn-primary {
+            background: linear-gradient(120deg, var(--primary), var(--primary-strong));
+            color: #eef2ff;
+            box-shadow: 0 10px 30px rgba(37,99,235,0.28);
+        }
+
+        .btn-ghost {
+            background: #f5f7fb;
+            color: var(--text);
+            border-color: var(--border);
+        }
+
+        .btn-danger {
+            background: linear-gradient(120deg, #f87171, #ef4444);
+            color: #160b0b;
+            box-shadow: 0 10px 28px rgba(248,113,113,0.32);
+        }
+
+        .prompt-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .prompt-item {
+            border-radius: 12px;
+            background: #f9fbff;
+            border: 1px solid var(--border);
+            padding: 14px;
+            display: grid;
+            gap: 6px;
+        }
+
+        .prompt-title {
+            margin: 0;
+            font-size: 18px;
+            letter-spacing: -0.01em;
+        }
+
+        .prompt-body {
+            color: var(--text);
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .response-box {
+            background: #0b1220;
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            line-height: 1.45;
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #eef2f7;
+            color: var(--text);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.08s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        }
+
+        .icon-btn:hover { transform: translateY(-1px); border-color: var(--primary); box-shadow: 0 6px 16px rgba(37,99,235,0.18); }
+        .icon-btn:active { transform: translateY(0); }
+
+        .icon-btn.danger { color: #b91c1c; }
+
+        .response-panel {
+            margin-top: 12px;
+            padding: 14px;
+            border-radius: 10px;
+            background: #f9fbff;
+            border: 1px solid var(--border);
+            min-height: 240px;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 640px) {
+            header { flex-direction: column; align-items: flex-start; }
+            .actions { width: 100%; }
+            .btn { width: 100%; text-align: center; }
+            .item-actions { width: 100%; }
+            .layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header>
+            <div>
+                <h1>AI Prompt Builder</h1>
+                <div class="subtext">Compose prompts by role/context/task/example, test them, then save for reuse.</div>
+            </div>
+        </header>
+
+        <div class="layout">
+            <div class="card">
+                <h3 class="column-title">Saved Prompts</h3>
+                <div id="prompts" class="prompt-list"></div>
+            </div>
+
+            <div class="card">
+                <h3 class="column-title">Builder</h3>
+                <div class="prompt-form">
+                    <div>
+                        <label for="model">Model</label>
+                        <select id="model" class="btn" style="width:100%; text-align:left; background:#f9fbff; border:1px solid var(--border); color:var(--text);">
+                            <option value="claude-sonnet-4-20250514">Claude Sonnet 4 (default)</option>
+                            <option value="gpt-5" disabled>GPT-5 (coming soon)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="title">Title</label>
+                        <input type="text" id="title" maxlength="25" placeholder="e.g. Email reply in Korean" autocomplete="off">
+                        <div style="display:flex; justify-content:flex-end; margin-top:6px;"><small class="meta" id="titleCounter">25 / 25</small></div>
+                    </div>
+                    <div>
+                        <label for="role">Role</label>
+                        <input type="text" id="role" placeholder="You are a helpful assistant specializing in..." autocomplete="off">
+                    </div>
+                    <div class="field-wrap">
+                        <label for="context">Context</label>
+                        <textarea id="context" rows="3" data-base-rows="3" placeholder="Provide business/product/task context..."></textarea>
+                        <button type="button" class="grow-btn" onclick="toggleGrow('context', 3, 8)">Expand</button>
+                    </div>
+                    <div class="field-wrap">
+                        <label for="task">Task</label>
+                        <textarea id="task" rows="3" data-base-rows="3" placeholder="What should the model do?"></textarea>
+                        <button type="button" class="grow-btn" onclick="toggleGrow('task', 3, 10)">Expand</button>
+                    </div>
+                    <div class="field-wrap">
+                        <label for="example">Example</label>
+                        <textarea id="example" rows="2" data-base-rows="2" placeholder="Optional: examples, style guide, format..."></textarea>
+                        <button type="button" class="grow-btn" onclick="toggleGrow('example', 2, 8)">Expand</button>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-primary" onclick="sendPrompt()">Send</button>
+                        <button class="btn btn-ghost" onclick="savePrompt()">Save</button>
+                        <button class="btn btn-ghost" id="updateBtn" style="display:none" onclick="updatePrompt()">Update</button>
+                        <button class="btn btn-ghost" onclick="resetBuilder()">Clear</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="column-title">Response</h3>
+                <div id="responseBox" class="response-panel">No response yet.</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let promptCache = [];
+        let selectedId = null;
+
+        function toggleGrow(id, baseRows, expandedRows) {
+            const el = document.getElementById(id);
+            const expanded = el.dataset.expanded === 'true';
+            el.rows = expanded ? baseRows : expandedRows;
+            el.dataset.expanded = expanded ? 'false' : 'true';
+        }
+
+        function formatDate(createdAt) {
+            if (!createdAt) return '';
+            // handle formats like '2025-12-25 12:34:56' or ISO '2025-12-25T12:34:56'
+            return String(createdAt).split(/[T ]/)[0];
+        }
+
+        function getFields() {
+            return {
+                model: document.getElementById('model').value,
+                title: document.getElementById('title').value.slice(0,25),
+                role: document.getElementById('role').value,
+                context: document.getElementById('context').value,
+                task: document.getElementById('task').value,
+                example: document.getElementById('example').value,
+            };
+        }
+
+        function setFields(p) {
+            document.getElementById('model').value = p.model || 'claude-sonnet-4-20250514';
+            document.getElementById('title').value = (p.title || '').slice(0,25);
+            document.getElementById('role').value = p.role || '';
+            document.getElementById('context').value = p.context || '';
+            document.getElementById('task').value = p.task || '';
+            document.getElementById('example').value = p.example || '';
+            updateTitleCounter();
+            toggleUpdateButton();
+        }
+
+        function toggleUpdateButton() {
+            const btn = document.getElementById('updateBtn');
+            if (!btn) return;
+            btn.style.display = selectedId ? 'inline-flex' : 'none';
+        }
+
+        function updateTitleCounter() {
+            const el = document.getElementById('title');
+            const cnt = document.getElementById('titleCounter');
+            const remaining = Math.max(0, 25 - (el.value || '').length);
+            cnt.textContent = `${remaining} / 25`;
+        }
+
+        function renderPrompts() {
+            const container = document.getElementById('prompts');
+            if (!promptCache.length) {
+                container.innerHTML = '<div class="meta">No prompts saved yet.</div>';
+                return;
+            }
+
+            container.innerHTML = promptCache.map(p => `
+                <div class="prompt-item">
+                    <div style="display:flex; align-items:flex-start; gap:8px; justify-content:space-between;">
+                        <div>
+                                <h3 class="prompt-title">${p.title || 'Untitled'}</h3>
+                                <div class="meta">${formatDate(p.created_at)}</div>
+                            </div>
+                        <div class="item-actions">
+                            <button class="icon-btn" title="Load" onclick="loadPrompt(${p.id})">↺</button>
+                            <button class="icon-btn danger" title="Delete" onclick="deletePrompt(${p.id})">✕</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadPrompts() {
+            const res = await fetch('/api/prompts');
+            promptCache = await res.json();
+            renderPrompts();
+        }
+
+        function resetBuilder() {
+            selectedId = null;
+            setFields({model: 'claude-sonnet-4-20250514', title: '', role: '', context: '', task: '', example: ''});
+            document.getElementById('responseBox').textContent = 'No response yet.';
+            toggleUpdateButton();
+        }
+
+        async function savePrompt() {
+            const payload = getFields();
+            const res = await fetch('/api/prompts', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const {id} = await res.json();
+            selectedId = id;
+            await loadPrompts();
+            toggleUpdateButton();
+        }
+
+        async function updatePrompt() {
+            if (!selectedId) {
+                alert('Load a saved prompt first, then update.');
+                return;
+            }
+            const payload = getFields();
+            const res = await fetch('/api/prompts/' + selectedId, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!data.updated) {
+                alert('Update failed (not found).');
+                return;
+            }
+            await loadPrompts();
+            document.getElementById('responseBox').textContent = 'Updated. Send to see response.';
+            toggleUpdateButton();
+        }
+
+        async function sendPrompt() {
+            const payload = getFields();
+            const box = document.getElementById('responseBox');
+            box.textContent = 'Waiting for response...';
+            const res = await fetch('/api/claude', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.error) {
+                box.textContent = 'Error: ' + data.error;
+            } else {
+                box.textContent = data.response || '(empty response)';
+            }
+        }
+
+        function loadPrompt(id) {
+            const found = promptCache.find(p => p.id === id);
+            if (!found) return;
+            selectedId = id;
+            setFields(found);
+            document.getElementById('responseBox').textContent = 'Loaded. Send to see response.';
+            toggleUpdateButton();
+        }
+
+        async function deletePrompt(id) {
+            if (!confirm('Delete this prompt?')) return;
+            await fetch('/api/prompts/' + id, { method: 'DELETE' });
+            if (selectedId === id) {
+                resetBuilder();
+            }
+            await loadPrompts();
+        }
+
+        // initialize
+        loadPrompts();
+        document.getElementById('title').addEventListener('input', updateTitleCounter);
+        // set initial counter
+        updateTitleCounter();
+    </script>
+</body>
+</html>
