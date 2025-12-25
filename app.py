@@ -173,14 +173,20 @@ def call_claude():
     prompt_text = build_prompt_text(role, context, task, example)
 
     client = Anthropic(api_key=api_key)
-    message = client.messages.create(
-        model=model,
-        max_tokens=1024,
-        messages=[{"role": "user", "content": prompt_text}]
-    )
-
-    response_text = message.content[0].text
-    return jsonify({'response': response_text})
+    # limit tokens to reduce memory and response size
+    max_tokens = int(data.get('max_tokens', 256))
+    try:
+        message = client.messages.create(
+            model=model,
+            max_tokens=max_tokens,
+            messages=[{"role": "user", "content": prompt_text}]
+        )
+        response_text = message.content[0].text
+        return jsonify({'response': response_text})
+    except Exception as e:
+        # catch network/timeouts/SDK errors and return a 504-like response
+        print('ERROR calling Anthropic:', str(e))
+        return jsonify({'error': 'Model request failed or timed out'}), 504
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
