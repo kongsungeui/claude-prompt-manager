@@ -6,7 +6,7 @@ services:
       repo: kongsungeui/claude-prompt-manager
       branch: main
     source_dir: /
-    run_command: gunicorn app:app -b 0.0.0.0:$PORT --workers 2
+    run_command: gunicorn app:app -b 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
     build_command: pip install -r requirements.txt
     instance_count: 1
     instance_size_slug: basic-xxs
