@@ -126,7 +126,12 @@ def create_prompt():
         'rendered': rendered,
     })
 
-    title = (data.get('title') or 'Untitled')[:25]
+    title = (data.get('title') or '').strip()
+    if not title:
+        cur.close()
+        conn.close()
+        return jsonify({'error': 'Title is required'}), 400
+    title = title[:25]
     cur.execute(
         'INSERT INTO prompts (title, content, model) VALUES (%s, %s, %s) RETURNING id',
         (title, content_json, model)
@@ -149,7 +154,12 @@ def update_prompt(prompt_id):
     task = data.get('task', '') or ''
     example = data.get('example', '') or ''
     model = data.get('model') or 'claude-sonnet-4-20250514'
-    title = (data.get('title') or 'Untitled')[:25]
+    title = (data.get('title') or '').strip()
+    if not title:
+        cur.close()
+        conn.close()
+        return jsonify({'error': 'Title is required'}), 400
+    title = title[:25]
 
     rendered = build_prompt_text(role, context, task, example)
     content_json = json.dumps({

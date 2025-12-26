@@ -277,8 +277,8 @@
                         </select>
                     </div>
                     <div>
-                        <label for="title">Title</label>
-                        <input type="text" id="title" maxlength="25" placeholder="e.g. Email reply in Korean" autocomplete="off">
+                        <label for="title">Title *</label>
+                        <input type="text" id="title" maxlength="25" placeholder="e.g. Email reply in Korean" autocomplete="off" required>
                         <div style="display:flex; justify-content:flex-end; margin-top:6px;"><small class="meta" id="titleCounter">25 / 25</small></div>
                     </div>
                     <div>
@@ -406,13 +406,21 @@
 
         async function savePrompt() {
             const payload = getFields();
+            if (!payload.title || payload.title.trim() === '') {
+                alert('Title is required. Please enter a title.');
+                return;
+            }
             const res = await fetch('/api/prompts', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
-            const {id} = await res.json();
-            selectedId = id;
+            const data = await res.json();
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
+            selectedId = data.id;
             await loadPrompts();
             toggleUpdateButton();
         }
@@ -423,12 +431,20 @@
                 return;
             }
             const payload = getFields();
+            if (!payload.title || payload.title.trim() === '') {
+                alert('Title is required. Please enter a title.');
+                return;
+            }
             const res = await fetch('/api/prompts/' + selectedId, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
             const data = await res.json();
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
             if (!data.updated) {
                 alert('Update failed (not found).');
                 return;
