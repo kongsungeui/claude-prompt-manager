@@ -404,10 +404,17 @@
             toggleUpdateButton();
         }
 
+        function validateTitle(title) {
+            if (!title || title.trim() === '') {
+                alert('Title is required. Please enter a title.');
+                return false;
+            }
+            return true;
+        }
+
         async function savePrompt() {
             const payload = getFields();
-            if (!payload.title || payload.title.trim() === '') {
-                alert('Title is required. Please enter a title.');
+            if (!validateTitle(payload.title)) {
                 return;
             }
             const res = await fetch('/api/prompts', {
@@ -415,11 +422,12 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
-            const data = await res.json();
-            if (data.error) {
-                alert('Error: ' + data.error);
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({error: 'Request failed'}));
+                alert('Error: ' + (data.error || 'Request failed'));
                 return;
             }
+            const data = await res.json();
             selectedId = data.id;
             await loadPrompts();
             toggleUpdateButton();
@@ -431,8 +439,7 @@
                 return;
             }
             const payload = getFields();
-            if (!payload.title || payload.title.trim() === '') {
-                alert('Title is required. Please enter a title.');
+            if (!validateTitle(payload.title)) {
                 return;
             }
             const res = await fetch('/api/prompts/' + selectedId, {
@@ -440,11 +447,12 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
-            const data = await res.json();
-            if (data.error) {
-                alert('Error: ' + data.error);
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({error: 'Request failed'}));
+                alert('Error: ' + (data.error || 'Request failed'));
                 return;
             }
+            const data = await res.json();
             if (!data.updated) {
                 alert('Update failed (not found).');
                 return;
