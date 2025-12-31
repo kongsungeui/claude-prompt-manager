@@ -10,8 +10,6 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/claude_prompts
       - CLAUDE_API_KEY=${CLAUDE_API_KEY}
-    env_file:
-      - ../.env  # 이것도 추가
     ports:
       - "8080:8080"
     depends_on:
