@@ -84,29 +84,6 @@
             font-size: 14px;
         }
 
-        .field-wrap {
-            position: relative;
-        }
-
-        .grow-btn {
-            position: absolute;
-            right: 10px;
-            bottom: 10px;
-            padding: 6px 8px;
-            font-size: 11px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: #131b2d;
-            color: var(--muted);
-            cursor: pointer;
-            transition: border-color 0.15s ease, color 0.15s ease;
-        }
-
-        .grow-btn:hover {
-            border-color: var(--primary);
-            color: var(--text);
-        }
-
         input, textarea {
             width: 100%;
             padding: 12px 14px;
@@ -285,20 +262,17 @@
                         <label for="role">Role</label>
                         <input type="text" id="role" placeholder="You are a helpful assistant specializing in..." autocomplete="off">
                     </div>
-                    <div class="field-wrap">
+                    <div>
                         <label for="context">Context</label>
                         <textarea id="context" rows="3" data-base-rows="3" placeholder="Provide business/product/task context..."></textarea>
-                        <button type="button" class="grow-btn" onclick="toggleGrow('context', 3, 8)">Expand</button>
                     </div>
-                    <div class="field-wrap">
+                    <div>
                         <label for="task">Task</label>
                         <textarea id="task" rows="3" data-base-rows="3" placeholder="What should the model do?"></textarea>
-                        <button type="button" class="grow-btn" onclick="toggleGrow('task', 3, 10)">Expand</button>
                     </div>
-                    <div class="field-wrap">
+                    <div>
                         <label for="example">Example</label>
                         <textarea id="example" rows="2" data-base-rows="2" placeholder="Optional: examples, style guide, format..."></textarea>
-                        <button type="button" class="grow-btn" onclick="toggleGrow('example', 2, 8)">Expand</button>
                     </div>
                     <div class="actions">
                         <button class="btn btn-primary" onclick="sendPrompt()">Send</button>
@@ -319,13 +293,6 @@
     <script>
         let promptCache = [];
         let selectedId = null;
-
-        function toggleGrow(id, baseRows, expandedRows) {
-            const el = document.getElementById(id);
-            const expanded = el.dataset.expanded === 'true';
-            el.rows = expanded ? baseRows : expandedRows;
-            el.dataset.expanded = expanded ? 'false' : 'true';
-        }
 
         function formatDate(createdAt) {
             if (!createdAt) return '';
