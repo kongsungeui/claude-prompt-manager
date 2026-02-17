@@ -3,7 +3,16 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspace",
-  "postCreateCommand": "pip install -r requirements.txt",
+  "postCreateCommand": "apt update && apt install -y git && pip install -r requirements.txt",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "google.geminicodeassist",
+        "openai.chatgpt",
+        "anthropic.claude-code"
+      ]
+    }
+  },
   "forwardPorts": [8080],
   "mounts": [
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,readonly,type=bind,consistency=cached"
